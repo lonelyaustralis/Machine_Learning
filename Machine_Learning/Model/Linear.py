@@ -105,7 +105,7 @@ class Linear(base_model):
     def __init__(self, channels_in: int, channels_out: int, Name: str = None, biases: bool = True, normalization: bool = False) -> None:
         super().__init__()
         self.Name = Name
-        self.__have_params = True
+        self.__set_params_state(True)
         self.channels_in = channels_in
         self.channels_out = channels_out
         self.normalization = normalization
@@ -115,6 +115,9 @@ class Linear(base_model):
         self.biases = biases
         if biases:
             self.bias = np.random.uniform(-k, k, size=(1, channels_out))
+
+    def __set_params_state(self, state: bool) -> None:
+        super().set_params_state(state)
 
     def forward(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
         self.inputs = inputs
@@ -136,3 +139,11 @@ class Linear(base_model):
         self.weights = self.weights - learning_rate * self.weights_gard
         if self.biases:
             self.bias = self.bias - learning_rate * self.bias_gard
+
+    def get_params(self) -> dict:
+        return {"weights": self.weights, "bias": self.bias}
+
+    def set_params(self, weights_array_dict: dict) -> None:
+        self.weights = weights_array_dict["weights"]
+        if self.biases:
+            self.bias = weights_array_dict["bias"]

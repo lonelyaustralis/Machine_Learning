@@ -1,4 +1,6 @@
 import numpy as np
+import json
+import os
 
 
 class base_model:
@@ -7,6 +9,9 @@ class base_model:
 
     def get_params_state(self) -> bool:
         return self.__have_params
+
+    def set_params_state(self, state: bool) -> None:
+        self.__have_params = state
 
     def __call__(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
         self.inputs = inputs
@@ -117,3 +122,25 @@ class Module(base_model):
         self.update(learning_rate)
         self.step += 1
         return self.loss_history[-1]
+
+    def save_weights(self, path: str, file_name) -> None:
+        json_list = []
+        for index, model in enumerate(self.model_list):
+            layer_info = {"class_name": model.__class__.__name__ + str(index), "params": model.get_params_state()}
+            if model.get_params_state():
+                data = model.get_params()
+                npz_file_name = file_name + "_" + model.__class__.__name__ + str(index) + ".npz"
+                np.savez(os.path.join(path, npz_file_name), **data)
+            json_list.append(layer_info)
+        with open(os.path.join(path, file_name + ".json"), "w") as f:
+            json.dump(json_list, f)
+
+    def load_weights(self, path: str, file_name) -> None:
+        with open(os.path.join(path, file_name + ".json"), "r") as f:
+            json_list = json.load(f)
+        for index, layer_info in enumerate(json_list):
+            class_name = layer_info["class_name"]
+            if layer_info["params"]:
+                data_array_dict = np.load(os.path.join(path, file_name + "_" + class_name + ".npz"))
+                self.model_list[index].set_params(data_array_dict)
+
