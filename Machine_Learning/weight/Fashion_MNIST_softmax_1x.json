@@ -1,0 +1,1 @@
+[{"class_name": "Linear0", "params": true}, {"class_name": "Sigmoid1", "params": false}, {"class_name": "Linear2", "params": true}, {"class_name": "CE_loss_with_softmax3", "params": false}]
