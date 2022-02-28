@@ -5,6 +5,7 @@
 ## 简介
 
 一份用纯numpy实现的机器学习代码，包含线性回归，逻辑回归，以及全连接神经网络三个部分
+
 **线性回归示例**：Linear_Regression.py 使用数据集为吴恩达机器学习课程所提供的两个数据集：ex1data1与ex1data2
 
 **逻辑回归示例**：Logit_Regression.py 使用数据集为吴恩达机器学习课程所提供的两个数据集：ex2data2与ex2data2
