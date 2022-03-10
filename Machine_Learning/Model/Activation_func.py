@@ -1,5 +1,6 @@
 from .base_ulits import base_model
 import numpy as np
+from typing import Union
 
 
 def sigmoid_func(inputs: np.ndarray):
@@ -75,7 +76,6 @@ class Relu(base_model):
     def __init__(self) -> None:
         super().__init__()
 
-
     def forward(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
         self.dec_mat = (inputs > 0).astype(np.float64)
         self.forward_result = np.multiply(inputs, self.dec_mat)
@@ -91,7 +91,6 @@ class Relu(base_model):
 class Sin(base_model):
     def __init__(self) -> None:
         super().__init__()
-
 
     def forward(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
         self.inputs = inputs
@@ -149,3 +148,56 @@ class LL_Relu(base_model):
         self.k = self.k - self.k_gard * learning_rate
         # learning_rate = learning_rate * 0.01
         self.a = self.a - self.a_gard * learning_rate
+
+
+def Activation_func_gard_check(func: base_model, value: np.ndarray, deviation=1e-4):
+    value = np.array(value)
+    func(value)
+    func_gard = func.backward(np.array([1]))
+    func_value_plus = func(value + deviation)
+    func_value_minus = func(value - deviation)
+    func_gard_numic = (func_value_plus - func_value_minus) / (2 * deviation)
+    return abs(func_gard_numic - func_gard), abs(func_gard_numic / (func_gard + func_gard_numic))
+
+
+class erf(base_model):
+    # 该函数使用数值近似法计算，计算精度为0.00001，算法详细查询 https://zh.wikipedia.org/wiki/%E8%AF%AF%E5%B7%AE%E5%87%BD%E6%95%B0
+    def __init__(self):
+        super().__init__()
+        self.p = 0.3275911
+        self.a1 = 0.254829592
+        self.a2 = -0.284496736
+        self.a3 = 1.421413741
+        self.a4 = -1.453152027
+        self.a5 = 1.061405429
+        # self.a = 0.140012
+
+    def forward(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
+        self.dec_mat = (inputs > 0).astype(np.float64)
+        self.dec_mat[self.dec_mat == 0] = -1
+        self.inputs = np.abs(inputs)
+        t = 1 / (1 + self.p * self.inputs)
+        self.forward_result = 1 - (
+            self.a1 * t + self.a2 * np.power(t, 2) + self.a3 * np.power(t, 3) + self.a4 * np.power(t, 4) + self.a5 * np.power(t, 5)
+        ) * np.exp(-np.power(self.inputs, 2))
+        return np.multiply(self.forward_result, self.dec_mat)
+
+        # x_2 = np.power(inputs, 2)
+        # result = np.sign(inputs) * (1 - np.exp(-x_2 * (4 / np.math.pi + self.a * x_2) / (1 + self.a * x_2)))
+        # return result
+
+
+class GELU(base_model):
+    def __init__(self):
+        super().__init__()
+        self.erf_func = erf()
+
+    def forward(self, inputs: np.ndarray, **kwargs) -> np.ndarray:
+        self.inputs = inputs
+        self.erf_value = self.erf_func(self.inputs / np.sqrt(2.0))
+        self.forward_result = 0.5 * (1 + self.erf_value)
+        return np.multiply(self.forward_result, self.inputs)
+
+    def backward(self, top_gard: np.ndarray) -> np.ndarray:
+        self.grad = 0.5 * (1 + self.erf_value + self.inputs * np.sqrt(2 / np.math.pi) * np.exp(-np.power(self.inputs, 2)))
+        return np.multiply(self.grad, top_gard)
