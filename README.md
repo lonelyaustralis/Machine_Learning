@@ -1,6 +1,5 @@
 ## Machine Learning
 
-作者： 西南民族大学 608实验室 杨航
 
 ## Update 2022-3-10
 更新了GELU激活函数，以及一个用于检查激活函数的反向梯度是否计算正确的工具函数，均放在Model/Activation_func.py文件中。工具函数的样例见GELU_check.py
